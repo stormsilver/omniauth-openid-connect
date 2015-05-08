@@ -126,7 +126,7 @@ module OmniAuth
       end
 
       def public_key
-        if options.discover
+        if options.discovery
           config.public_keys.first
         else
           key_or_secret
@@ -199,15 +199,15 @@ module OmniAuth
 
       def key_or_secret
         case options.client_signing_alg
-          when :HS256, :HS384, :HS512
-            return client_options.secret
-          when :RS256, :RS384, :RS512
-            if options.client_jwk_signing_key
-              return parse_jwk_key(options.client_jwk_signing_key)
-            elsif options.client_x509_signing_key
-              return parse_x509_key(options.client_x509_signing_key)
-            end
-          else
+        when :HS256, :HS384, :HS512
+          return client_options.secret
+        when :RS256, :RS384, :RS512
+          if options.client_jwk_signing_key
+            return parse_jwk_key(options.client_jwk_signing_key)
+          elsif options.client_x509_signing_key
+            return parse_x509_key(options.client_x509_signing_key)
+          end
+        else
         end
       end
 
