@@ -6,6 +6,7 @@ class OmniAuth::Strategies::OpenIDConnectTest < StrategyTestCase
     assert_equal 443, strategy.options.client_options.port
     assert_equal '/authorize', strategy.options.client_options.authorization_endpoint
     assert_equal '/token', strategy.options.client_options.token_endpoint
+    assert_equal '/end_session', strategy.options.client_options.end_session_endpoint
   end
 
   def test_request_phase

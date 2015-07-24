@@ -20,6 +20,7 @@ module OmniAuth
         authorization_endpoint: "/authorize",
         token_endpoint: "/token",
         userinfo_endpoint: "/userinfo",
+        end_session_endpoint: '/end_session',
         jwks_uri: '/jwk'
       }
       option :issuer
@@ -125,6 +126,12 @@ module OmniAuth
         client.authorization_uri(opts.reject{|k,v| v.nil?})
       end
 
+      def end_session_uri(after_sign_out_path = nil)
+        options.issuer = issuer if options.issuer.blank?
+        discover! if options.discovery
+        client.end_session_uri(after_sign_out_path)
+      end
+
       def public_key
         if options.discovery
           config.public_keys.first
@@ -144,6 +151,7 @@ module OmniAuth
         client_options.authorization_endpoint = config.authorization_endpoint
         client_options.token_endpoint = config.token_endpoint
         client_options.userinfo_endpoint = config.userinfo_endpoint
+        client_options.end_session_endpoint = config.end_session_endpoint
         client_options.jwks_uri = config.jwks_uri
       end
 
