@@ -186,7 +186,7 @@ module OmniAuth
 
       def new_state
         state = options.state.call if options.state.respond_to? :call
-        session['omniauth.state'] = state || SecureRandom.hex(16)
+        session['omniauth.state'] = session['omniauth.state'] || state || SecureRandom.hex(16)
       end
 
       def stored_state
@@ -194,7 +194,7 @@ module OmniAuth
       end
 
       def new_nonce
-        session['omniauth.nonce'] = SecureRandom.hex(16)
+        session['omniauth.nonce'] = session['omniauth.nonce'] || SecureRandom.hex(16)
       end
 
       def stored_nonce

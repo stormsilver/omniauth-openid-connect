@@ -28,6 +28,7 @@ class OmniAuth::Strategies::OpenIDConnectTest < StrategyTestCase
 
     config = stub('OpenIDConnect::Discovery::Provder::Config')
     config.stubs(:authorization_endpoint).returns('https://example.com/authorization')
+    config.stubs(:end_session_endpoint).returns('https://example.com/end_session')
     config.stubs(:token_endpoint).returns('https://example.com/token')
     config.stubs(:userinfo_endpoint).returns('https://example.com/userinfo')
     config.stubs(:jwks_uri).returns('https://example.com/jwks')
@@ -91,6 +92,7 @@ class OmniAuth::Strategies::OpenIDConnectTest < StrategyTestCase
 
     config = stub('OpenIDConnect::Discovery::Provder::Config')
     config.stubs(:authorization_endpoint).returns('https://example.com/authorization')
+    config.stubs(:end_session_endpoint).returns('https://example.com/end_session')
     config.stubs(:token_endpoint).returns('https://example.com/token')
     config.stubs(:userinfo_endpoint).returns('https://example.com/userinfo')
     config.stubs(:jwks_uri).returns('https://example.com/jwks')
