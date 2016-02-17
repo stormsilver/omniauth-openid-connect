@@ -8,6 +8,8 @@ require 'openid_connect'
 module OmniAuth
   module Strategies
     class OpenIDConnect
+      STATE_SESSION_KEY = 'omniauth.openid_connect.state'.freeze
+
       include OmniAuth::Strategy
 
       option :client_options, {
@@ -90,7 +92,7 @@ module OmniAuth
         error = request.params['error_reason'] || request.params['error']
         if error
           raise CallbackError.new(request.params['error'], request.params['error_description'] || request.params['error_reason'], request.params['error_uri'])
-        elsif request.params['state'].to_s.empty? || request.params['state'] != stored_state
+        elsif state_invalid?
           return Rack::Response.new(['401 Unauthorized'], 401).finish
         elsif !request.params["code"]
           return fail!(:missing_code, OmniAuth::OpenIDConnect::MissingCodeError.new(request.params["error"]))
@@ -100,6 +102,7 @@ module OmniAuth
           client.redirect_uri = client_options.redirect_uri
           client.authorization_code = authorization_code
           access_token
+          cleanup_state(request.params['state'])
           super
         end
       rescue CallbackError => e
@@ -117,11 +120,12 @@ module OmniAuth
 
       def authorize_uri
         client.redirect_uri = client_options.redirect_uri
+        state = new_state
         opts = {
             response_type: options.response_type,
             scope: options.scope,
-            state: new_state,
-            nonce: (new_nonce if options.send_nonce),
+            state: state,
+            nonce: (nonce_for_state(state) if options.send_nonce),
         }
         client.authorization_uri(opts.reject{|k,v| v.nil?})
       end
@@ -169,7 +173,7 @@ module OmniAuth
           _id_token.verify!(
               issuer: options.issuer,
               client_id: client_options.identifier,
-              nonce: stored_nonce
+              nonce: nonce_for_state(request.params['state'])
           )
           _access_token
         }.call()
@@ -179,30 +183,45 @@ module OmniAuth
         ::OpenIDConnect::ResponseObject::IdToken.decode(id_token, public_key)
       end
 
-
       def client_options
         options.client_options
       end
 
       def new_state
         state = options.state.call if options.state.respond_to? :call
-        session['omniauth.state'] = session['omniauth.state'] || state || SecureRandom.hex(16)
+        state ||= SecureRandom.hex(16)
+        nonce = SecureRandom.hex(16)
+        session[STATE_SESSION_KEY] ||= {}
+        session[STATE_SESSION_KEY][state] = nonce
+        state
       end
 
-      def stored_state
-        session.delete('omniauth.state')
+      def state_invalid?
+        no_state_provided || no_state_session || state_param_invalid
       end
 
-      def new_nonce
-        session['omniauth.nonce'] = session['omniauth.nonce'] || SecureRandom.hex(16)
+      def no_state_provided
+        request.params['state'].to_s.empty?
       end
 
-      def stored_nonce
-        session.delete('omniauth.nonce')
+      def no_state_session
+        session[STATE_SESSION_KEY].empty?
+      end
+
+      def state_param_invalid
+        !session[STATE_SESSION_KEY].has_key?(request.params['state'])
+      end
+
+      def nonce_for_state(state)
+        session[STATE_SESSION_KEY] && session[STATE_SESSION_KEY][state]
+      end
+
+      def cleanup_state(state)
+        session[STATE_SESSION_KEY] && session[STATE_SESSION_KEY].delete(state)
       end
 
       def session
-        @env.nil? ? {} : super
+        @env.nil? ? (@session ||= {}) : super
       end
 
       def key_or_secret
