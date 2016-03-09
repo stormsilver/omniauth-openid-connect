@@ -205,7 +205,7 @@ module OmniAuth
       end
 
       def no_state_session
-        session[STATE_SESSION_KEY].empty?
+        session[STATE_SESSION_KEY].nil? || session[STATE_SESSION_KEY].empty?
       end
 
       def state_param_invalid
